@@ -44,14 +44,22 @@ class CauserResolver
         return $this->getCauser($subject);
     }
 
+    // Changes made to existing method
     protected function resolveUsingId(int | string $subject): Model
     {
         $guard = $this->authManager->guard($this->authDriver);
 
         $provider = method_exists($guard, 'getProvider') ? $guard->getProvider() : null;
-        $model = method_exists($provider, 'retrieveById') ? $provider->retrieveById($subject) : null;
 
-        throw_unless($model instanceof Model, CouldNotLogActivity::couldNotDetermineUser($subject));
+        if(get_class($guard) == "Illuminate\Auth\RequestGuard" && $provider == null)
+        {
+            $model = $guard->user();
+        }
+        else
+        {
+            $model = method_exists($provider, 'retrieveById') ? $provider->retrieveById($subject) : null;
+            throw_unless($model instanceof Model, CouldNotLogActivity::couldNotDetermineUser($subject));
+        }
 
         return $model;
     }
